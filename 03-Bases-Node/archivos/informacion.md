@@ -1,0 +1,1 @@
+# La carpeta contiene archivos txt creados por /helpers/multiplicar
