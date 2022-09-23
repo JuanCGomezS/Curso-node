@@ -1,29 +1,59 @@
 //const { mostrarMenu, pausa } = require('./helpers/mensajes');
-const { inquirerMenu, pausa } = require('./helpers/inquirer');
+require('colors');
+const { guardarDb, leerDb } = require('./helpers/guardarArchivo');
+const { inquirerMenu, pausa, leerInput, listadoBorrarTarea, confirm, listadoMostrarTarea } = require('./helpers/inquirer');
 const { Tarea } = require('./models/tarea');
 const { Tareas } = require('./models/tareas');
-require('colors');
 console.clear();
 
 const main = async () => {
     let opt = '';
+    const tareas = new Tareas();
 
-    /* do {
-        opt = await mostrarMenu();
-        console.log({ opt });
+    const tareasDb = leerDb();
 
-        if (opt !== '0') await pausa();
-    } while (opt !== '0'); */
+    if (tareasDb) { // Cargar tareas
+        tareas.cargarTareasFromArray(tareasDb);
+    }
 
     do {
-        //opt = await inquirerMenu();
-        //console.log({ opt });
-        const tareas = new Tareas();
-        const tarea = new Tarea('Comprar comida');
+        //Imprimir el menú
+        opt = await inquirerMenu();
 
-        tareas._listado[tarea.id] = tarea;
+        switch (opt) {
+            case '1':
+                // Crear opción
+                const desc = await leerInput('Descipción: ');
+                tareas.crearTarea(desc);
+                break;
+            case '2':
+                tareas.listadoCompleto();
+                break;
+            case '3': //Tareas completadas
+                tareas.listarPendientesCompletadas(true);
+                break;
+            case '4': //Listar pendientes
+                tareas.listarPendientesCompletadas(false)
+                break;
+            case '5': //Completado / Pendiente
+                const ids = await listadoMostrarTarea(tareas.listadoArr);
+                tareas.cambiarTarea(ids);
+                break; //Borrar
+            case '6':
+                const id = await listadoBorrarTarea(tareas.listadoArr);
+                if (id !== '0') {
+                    const ok = await confirm('¿Seguro desea borrar?');
 
-        console.log(tareas);
+                    if (ok) {
+                        tareas.borrarTarea(id);
+                        console.log('Tarea Borrada');
+                    }
+                }
+
+                break;
+        }
+
+        guardarDb(tareas.listadoArr);
 
         await pausa();
     } while (opt !== '0');
